@@ -31,9 +31,8 @@ supabase/.temp/
 supabase/.env
 supabase/.env.local
 
-# Si tienes seeds con datos reales, ignóralos
-supabase/seed.sql
-supabase/seeds/
+# Los datos demo versionados viven en supabase/seeds/.
+supabase/seeds/private/
 
 # =========================
 # Vercel

@@ -2,6 +2,7 @@ const requiredEnv = {
   VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
   VITE_SUPABASE_PUBLISHABLE_KEY: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
   VITE_ADMIN_ROUTE_SLUG: import.meta.env.VITE_ADMIN_ROUTE_SLUG,
+  VITE_WHATSAPP_NUMBER: import.meta.env.VITE_WHATSAPP_NUMBER,
 }
 
 export const missingEnvVars = Object.entries(requiredEnv)
@@ -32,9 +33,15 @@ export const env = {
   adminRouteSlug: getRequiredEnv('VITE_ADMIN_ROUTE_SLUG')
     .trim()
     .replace(/^\/+|\/+$/g, ''),
-  whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER ?? '',
+  whatsappNumber: getRequiredEnv('VITE_WHATSAPP_NUMBER').replace(/\D/g, ''),
 }
 
 if (!env.adminRouteSlug) {
   throw new Error('VITE_ADMIN_ROUTE_SLUG no puede estar vacio.')
+}
+
+if (env.whatsappNumber.length < 8) {
+  throw new Error(
+    'VITE_WHATSAPP_NUMBER debe incluir un numero valido con codigo de pais.',
+  )
 }

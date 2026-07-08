@@ -3,8 +3,13 @@ import { env } from '../config/env'
 export const publicPaths = {
   home: '/',
   catalog: '/catalogo',
+  cart: '/carrito',
   services: '/servicios',
   login: '/login',
+}
+
+export function getProductPath(slug) {
+  return `${publicPaths.catalog}/${encodeURIComponent(slug)}`
 }
 
 export const adminPaths = {
