@@ -5,7 +5,7 @@ React Router y Sileo.
 
 ## Estado actual
 
-Fases 1 y 2 completadas:
+Fases 1, 2 y 3 completadas:
 
 - Base React/Vite, Supabase Auth, Sileo y React Router.
 - Catalogo publico conectado a la vista `catalog_products`.
@@ -13,9 +13,11 @@ Fases 1 y 2 completadas:
 - Detalle de producto con galeria de hasta 5 imagenes.
 - Carrito persistente en `localStorage`.
 - Pedido preparado para WhatsApp mediante `VITE_WHATSAPP_NUMBER`.
+- Modulo administrativo de productos con listado paginado, filtros, CRUD,
+  costos separados en `product_costs`, categorias e imagenes en Storage.
 
-No se implementan todavia POS, administracion de productos, inventario,
-dashboard, compras pendientes ni servicios secretariales administrativos.
+No se implementan todavia POS, inventario avanzado, dashboard, compras
+pendientes ni servicios secretariales administrativos.
 
 ## Estructura principal
 
@@ -27,6 +29,10 @@ src/
   layouts/     Layout publico y layout administrativo
   lib/         Clientes y utilidades externas
   modules/
+    products/
+      components/  UI administrativa de productos/categorias
+      pages/       Rutas admin de productos
+      services/    Consultas admin, costos, categorias e imagenes
     public/
       cart/        Estado global del carrito
       components/  UI del catalogo y carrito
@@ -34,6 +40,7 @@ src/
       utils/       Formato de moneda
   pages/       Paginas publicas y administrativas
   routes/      Paths y configuracion de React Router
+  shared/      Componentes, hooks, servicios y utilidades reutilizables
 ```
 
 ## Variables de entorno
@@ -77,6 +84,10 @@ npm run build
    - `/login`
 5. Revisa la ruta admin usando el slug configurado:
    - `/${VITE_ADMIN_ROUTE_SLUG}`
+   - `/${VITE_ADMIN_ROUTE_SLUG}/productos`
+   - `/${VITE_ADMIN_ROUTE_SLUG}/productos/nuevo`
+   - `/${VITE_ADMIN_ROUTE_SLUG}/productos/:id/editar`
+   - `/${VITE_ADMIN_ROUTE_SLUG}/categorias`
 
 Si no hay sesion de Supabase Auth, la ruta admin redirige a `/login`. Para
 entrar, usa un usuario existente de Supabase Auth con email y contrasena.
@@ -98,6 +109,40 @@ entrar, usa un usuario existente de Supabase Auth con email y contrasena.
 
 Los precios del mensaje son estimados. La disponibilidad y el total final se
 confirman en WhatsApp.
+
+### Probar la Fase 3
+
+Requisitos de datos y permisos:
+
+- Tu usuario debe estar en `organization_members` con rol `owner` o `admin`.
+- La organizacion debe existir y las consultas administrativas se filtran por
+  ese `org_id`.
+- El bucket `product-images` debe existir; ya esta definido en las migraciones.
+
+Flujo recomendado:
+
+1. Inicia sesion en `/login`.
+2. Abre `/${VITE_ADMIN_ROUTE_SLUG}/productos`.
+3. Prueba busqueda por nombre, SKU o codigo de barras.
+4. Prueba filtros por estado y categoria.
+5. Entra a `/${VITE_ADMIN_ROUTE_SLUG}/productos/nuevo`.
+6. Crea un producto con nombre, precio final, costo, stock, estado y visibilidad.
+7. Sube entre 1 y 5 imagenes desde el dispositivo. Solo se aceptan JPG, PNG o
+   WEBP de hasta 5 MB; SVG no es valido.
+8. Guarda y verifica que:
+   - `products.sale_price` tenga el precio final.
+   - `product_costs.unit_cost` tenga el costo.
+   - `product_images` tenga la metadata ordenada por `position`.
+   - Storage tenga los archivos bajo `product-images/<org_id>/<product_id>/`.
+9. Edita el producto, cambia cantidades, estado, visibilidad, categoria o
+   imagen principal.
+10. Archiva o elimina desde el listado. Si el producto no tiene ventas, se
+    borra y se intenta limpiar Storage; si ya tiene ventas, se archiva para
+    conservar el historial.
+
+Para categorias, abre `/${VITE_ADMIN_ROUTE_SLUG}/categorias` y crea, edita,
+activa/desactiva o elimina categorias. Si eliminas una categoria, los productos
+asociados quedan sin categoria por la regla existente de la base de datos.
 
 ### Datos de demostracion
 
@@ -141,7 +186,10 @@ supabase/scripts/cleanup_demo.sql
 
 El proyecto ya contiene migraciones en `supabase/migrations`. La Fase 2 utiliza
 la vista existente `catalog_products`, las politicas RLS publicas y el bucket
-publico `product-images`; no modifica migraciones.
+publico `product-images`.
+
+La Fase 3 usa las tablas `products`, `product_costs`, `product_categories` y
+`product_images` con el cliente Supabase autenticado. No modifica migraciones.
 
 El cliente del navegador usa exclusivamente
 `VITE_SUPABASE_PUBLISHABLE_KEY`. No configures `service_role` en variables
@@ -153,6 +201,12 @@ La configuracion frontend vive en:
 - `src/lib/supabaseClient.js`
 - `src/auth/AuthProvider.jsx`
 - `src/components/ProtectedRoute.jsx`
+
+Limitacion actual de Storage: las politicas existentes permiten subir archivos
+al bucket `product-images` a usuarios autenticados. La app valida rol `owner` o
+`admin` y filtra por `org_id` en tablas, pero una fase futura deberia reforzar
+la ruta del objeto en Storage con una politica mas estricta o una Edge Function
+de subida.
 
 ## Plan tecnico por fases
 
@@ -184,6 +238,8 @@ La configuracion frontend vive en:
 - Carga de imagenes al bucket `product-images`.
 - Validaciones de formulario.
 - Control de visibilidad publica y estado de producto.
+- Costos guardados en `product_costs`, separados del catalogo publico.
+- Listado administrativo con paginacion real y filtros.
 
 ### Fase 4 - Inventario
 

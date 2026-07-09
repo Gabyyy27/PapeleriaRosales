@@ -2,6 +2,9 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from '../components/ProtectedRoute'
 import { AdminLayout } from '../layouts/AdminLayout'
 import { PublicLayout } from '../layouts/PublicLayout'
+import { CategoriesPage } from '../modules/products/pages/CategoriesPage'
+import { ProductFormPage } from '../modules/products/pages/ProductFormPage'
+import { ProductsPage } from '../modules/products/pages/ProductsPage'
 import { AdminHomePage } from '../pages/admin/AdminHomePage'
 import { CartPage } from '../pages/public/CartPage'
 import { CatalogPage } from '../pages/public/CatalogPage'
@@ -37,6 +40,16 @@ export function AppRouter() {
           }
         >
           <Route index element={<AdminHomePage />} />
+          <Route path="productos" element={<ProductsPage />} />
+          <Route
+            path="productos/nuevo"
+            element={<ProductFormPage mode="create" />}
+          />
+          <Route
+            path="productos/:productId/editar"
+            element={<ProductFormPage mode="edit" />}
+          />
+          <Route path="categorias" element={<CategoriesPage />} />
           <Route path="*" element={<Navigate replace to={adminPaths.root} />} />
         </Route>
 
